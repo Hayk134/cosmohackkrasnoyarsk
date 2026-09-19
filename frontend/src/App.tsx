@@ -58,7 +58,7 @@ export const App: React.FC = () => {
   // Leaflet Swipe Comparison Tool states (inline directly in HUD)
   const [isSwipeActive, setIsSwipeActive] = useState<boolean>(false);
   const [swipePosition, setSwipePosition] = useState<number>(50);
-  const [swipeLeftLayer, setSwipeLeftLayer] = useState<SwipeLayerId>('biomass');
+  const [swipeLeftLayer, setSwipeLeftLayer] = useState<SwipeLayerId>('satellite');
   const [swipeRightLayer, setSwipeRightLayer] = useState<SwipeLayerId>('biomass');
   const [swipeLeftYear, setSwipeLeftYear] = useState<number>(2019);
   const [swipeRightYear, setSwipeRightYear] = useState<number>(2024);
@@ -816,7 +816,7 @@ export const App: React.FC = () => {
           setIsSwipeActive(true);
           setSwipeLeftLayer('biomass');
           setSwipeLeftYear(2024);
-          setSwipeRightLayer('biomass');
+          setSwipeRightLayer('stress');
           setSwipeRightYear(targetYear || 2027);
           setSwipePosition(50);
         }}

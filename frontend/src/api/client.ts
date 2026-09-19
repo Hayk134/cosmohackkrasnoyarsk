@@ -171,8 +171,9 @@ export interface OverlayBounds {
   north: number;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')}/api`
+const rawBase = import.meta.env.VITE_API_BASE_URL || (typeof window !== 'undefined' && window.location.hostname.includes('github.io') ? 'https://213.176.118.9.sslip.io' : '');
+const API_BASE = rawBase
+  ? `${rawBase.replace(/\/+$/, '')}/api`
   : '/api';
 
 export async function fetchSites(): Promise<SiteInfo[]> {

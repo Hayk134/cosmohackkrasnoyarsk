@@ -170,17 +170,18 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     const splitLayerPoint = map.containerPointToLayerPoint([splitContainerX, 0]);
 
     if (leftEl && leftBoundsRef.current) {
-      const nwPoint = map.latLngToLayerPoint(leftBoundsRef.current.getNorthWest());
-      const clipX = splitLayerPoint.x - nwPoint.x;
-      const imgWidth = leftEl.clientWidth || leftEl.width || 500;
-      const rightCut = Math.max(0, imgWidth - clipX);
+      const nw = map.latLngToLayerPoint(leftBoundsRef.current.getNorthWest());
+      const se = map.latLngToLayerPoint(leftBoundsRef.current.getSouthEast());
+      const w = Math.max(1, se.x - nw.x);
+      const clipX = splitLayerPoint.x - nw.x;
+      const rightCut = Math.max(0, w - clipX);
       leftEl.style.clipPath = `inset(0px ${rightCut}px 0px 0px)`;
       (leftEl.style as any).webkitClipPath = `inset(0px ${rightCut}px 0px 0px)`;
     }
 
     if (rightEl && rightBoundsRef.current) {
-      const nwPoint = map.latLngToLayerPoint(rightBoundsRef.current.getNorthWest());
-      const clipX = splitLayerPoint.x - nwPoint.x;
+      const nw = map.latLngToLayerPoint(rightBoundsRef.current.getNorthWest());
+      const clipX = splitLayerPoint.x - nw.x;
       const leftCut = Math.max(0, clipX);
       rightEl.style.clipPath = `inset(0px 0px 0px ${leftCut}px)`;
       (rightEl.style as any).webkitClipPath = `inset(0px 0px 0px ${leftCut}px)`;

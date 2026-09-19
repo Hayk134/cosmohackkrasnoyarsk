@@ -252,12 +252,6 @@ def get_raster_overlay(
         # 3b. Catastrophe / Stress Shock Simulation Layer (Post-Disaster Loss Map)
         # -------------------------------------------------------------------
         elif layer_lower in ["stress", "catastrophe", "stress_sim"]:
-            # Real physical canopy disturbance by year:
-            # <= 2026: Pre-catastrophe baseline, 0 damage (transparent)
-            # 2027: Peak shock event (100% damage)
-            # 2028: Residual shock (90% damage)
-            # 2030: Active regeneration (40% damage)
-            # 2035: Full recovery (8% damage)
             b2026, bnds, forest_mask = _get_projected_or_actual_agb(site_dir, 2026, default_bounds)
             b2027, _, _ = _get_projected_or_actual_agb(site_dir, 2027, default_bounds)
 
@@ -266,43 +260,34 @@ def get_raster_overlay(
                 return _build_image_response(png_bytes, bnds)
 
             ny, nx = b2026.shape
-            if target_year <= 2026:
-                # Pre-shock: completely transparent raster matching exact polygon bounds
-                rgba_bytes = np.zeros((ny, nx, 4), dtype=np.uint8)
-                img = Image.fromarray(rgba_bytes, mode="RGBA")
-                buf = io.BytesIO()
-                img.save(buf, format="PNG")
-                return _build_image_response(buf.getvalue(), bnds)
 
-            if target_year == 2027:
-                intensity = 1.0
-            elif target_year == 2028:
-                intensity = 0.90
+            # Intensity by projection phase:
+            if target_year == 2028:
+                intensity = 0.92
             elif target_year == 2029:
-                intensity = 0.65
+                intensity = 0.68
             elif target_year == 2030:
-                intensity = 0.40
+                intensity = 0.45
             elif target_year >= 2035:
-                intensity = 0.08
+                intensity = 0.15
             else:
-                frac = (target_year - 2030) / 5.0
-                intensity = float(0.40 * (1.0 - frac) + 0.08 * frac)
+                intensity = 1.0  # Full peak catastrophic shock (2027 or default)
 
             # Peak canopy biomass loss in t/ha scaled by shock phase intensity
             peak_loss_t_ha = np.where(forest_mask, np.clip(b2026 - b2027, 0.0, None), 0.0)
             loss_t_ha = peak_loss_t_ha * intensity
 
-            # Normalized 0 to 45 t/ha loss
-            norm_loss = np.clip((loss_t_ha - 4.0) / 40.0, 0.0, 1.0)
+            # Normalized 0 to 35 t/ha loss
+            norm_loss = np.clip(loss_t_ha / 32.0, 0.0, 1.0)
             cmap = matplotlib.colormaps["YlOrRd"]
             rgba = cmap(norm_loss)
             rgba_bytes = (rgba * 255).astype(np.uint8)
 
-            # Dynamic Alpha: pixels with zero/low loss are 100% transparent, high loss are bright fiery red!
+            # Dynamic Alpha: pixels with zero/low loss are transparent, high loss are fiery crimson/orange!
             alpha = np.where(
-                (loss_t_ha <= 4.0) | (~forest_mask),
+                (loss_t_ha <= 2.0) | (~forest_mask),
                 0,
-                np.clip(115 + norm_loss * 120, 0, 235),
+                np.clip(160 + norm_loss * 90, 0, 250),
             ).astype(np.uint8)
             rgba_bytes[:, :, 3] = alpha
 
