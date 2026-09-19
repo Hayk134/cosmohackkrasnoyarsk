@@ -8,5 +8,7 @@ __pycache__/
 .pytest_cache/
 .env
 *.log
-.DS_Store
-Thumbs.db
+*.tmp
+# Исключаем сырые тяжелые GeoTIFF растры свыше 50 МБ, если такие есть в data
+data/**/*.tif
+data/**/*.tiff
