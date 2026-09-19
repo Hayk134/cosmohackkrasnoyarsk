@@ -273,8 +273,9 @@ export async function fetchRasterOverlayWithBounds(
   year: number = 2024,
   year_start?: number
 ): Promise<{ url: string; bounds: OverlayBounds }> {
-  const url = getRasterOverlayUrl(site, layer, year, year_start);
-  const res = await fetch(url);
+  let url = getRasterOverlayUrl(site, layer, year, year_start);
+  url += `&_t=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch raster: ${res.statusText}`);
 
   const west = parseFloat(res.headers.get('x-bbox-west') || '0');

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { SwipeLayerId } from './b2b/SwipeToolPanel';
 
-export type RasterLayerType = 'none' | 'biomass' | 'fire' | 'loss' | 'ndvi' | 'nbr' | 'change';
+export type RasterLayerType = 'none' | 'biomass' | 'fire' | 'loss' | 'ndvi' | 'nbr' | 'change' | 'satellite';
 
 interface FloatingBottomBarProps {
   activeLayer: RasterLayerType;
@@ -63,10 +63,12 @@ const SWIPE_RIGHT_YEARS = [
 
 const RASTER_LAYERS: { id: RasterLayerType; label: string; icon: any; color: string }[] = [
   { id: 'biomass', label: 'Биомасса', icon: Trees, color: 'text-emerald-500' },
-  { id: 'fire', label: 'Пожары', icon: Flame, color: 'text-orange-400' },
+  { id: 'satellite', label: 'Спутник S2', icon: Layers, color: 'text-sky-400' },
   { id: 'loss', label: 'Потери', icon: Flame, color: 'text-rose-400' },
+  { id: 'fire', label: 'Пожары', icon: Flame, color: 'text-orange-400' },
   { id: 'ndvi', label: 'NDVI', icon: Activity, color: 'text-emerald-600' },
   { id: 'nbr', label: 'NBR', icon: Layers, color: 'text-amber-500' },
+  { id: 'change', label: 'Динамика Δ', icon: Activity, color: 'text-lime-400' },
   { id: 'none', label: 'Без слоя', icon: EyeOff, color: 'text-zinc-400' },
 ];
 

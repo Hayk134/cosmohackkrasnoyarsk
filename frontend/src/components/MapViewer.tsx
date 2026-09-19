@@ -3,7 +3,7 @@ import L from 'leaflet';
 import { Maximize2, ChevronsLeftRight, X } from 'lucide-react';
 import { SiteInfo, fetchRasterOverlayWithBounds } from '../api/client';
 
-export type RasterLayerType = 'none' | 'biomass' | 'fire' | 'loss' | 'ndvi' | 'nbr' | 'change';
+export type RasterLayerType = 'none' | 'biomass' | 'fire' | 'loss' | 'ndvi' | 'nbr' | 'change' | 'satellite';
 
 interface MapViewerProps {
   site: SiteInfo | null;
@@ -155,7 +155,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     }
   }, [geojson, siteId]);
 
-  // Swipe clipping function
+  // Swipe clipping function with robust inset clipping
   const updateSwipeClips = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!map || !isSwipeActive) return;
@@ -172,17 +172,22 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     if (leftEl && leftBoundsRef.current) {
       const nwPoint = map.latLngToLayerPoint(leftBoundsRef.current.getNorthWest());
       const clipX = splitLayerPoint.x - nwPoint.x;
-      leftEl.style.clipPath = `polygon(0 0, ${clipX}px 0, ${clipX}px 100%, 0 100%)`;
+      const imgWidth = leftEl.clientWidth || leftEl.width || 500;
+      const rightCut = Math.max(0, imgWidth - clipX);
+      leftEl.style.clipPath = `inset(0px ${rightCut}px 0px 0px)`;
+      (leftEl.style as any).webkitClipPath = `inset(0px ${rightCut}px 0px 0px)`;
     }
 
     if (rightEl && rightBoundsRef.current) {
       const nwPoint = map.latLngToLayerPoint(rightBoundsRef.current.getNorthWest());
       const clipX = splitLayerPoint.x - nwPoint.x;
-      rightEl.style.clipPath = `polygon(${clipX}px 0, 100% 0, 100% 100%, ${clipX}px 100%)`;
+      const leftCut = Math.max(0, clipX);
+      rightEl.style.clipPath = `inset(0px 0px 0px ${leftCut}px)`;
+      (rightEl.style as any).webkitClipPath = `inset(0px 0px 0px ${leftCut}px)`;
     }
   }, [isSwipeActive, swipePosition]);
 
-  // Synchronize swipe clips with map pan and zoom events
+  // Synchronize swipe clips with map pan, zoom, and swipePosition
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !isSwipeActive) return;
@@ -199,6 +204,12 @@ export const MapViewer: React.FC<MapViewerProps> = ({
       map.off('viewreset', updateSwipeClips);
     };
   }, [isSwipeActive, updateSwipeClips]);
+
+  useEffect(() => {
+    if (isSwipeActive) {
+      updateSwipeClips();
+    }
+  }, [swipePosition, isSwipeActive, updateSwipeClips]);
 
   // Manage Raster Overlays: Single mode vs Swipe dual mode
   useEffect(() => {
@@ -267,6 +278,9 @@ export const MapViewer: React.FC<MapViewerProps> = ({
               interactive: false,
               zIndex: 350,
             }).addTo(map);
+            lOverlay.on('load', () => {
+              if (isMounted) updateSwipeClips();
+            });
             leftOverlayRef.current = lOverlay;
           }
 
@@ -278,6 +292,9 @@ export const MapViewer: React.FC<MapViewerProps> = ({
               interactive: false,
               zIndex: 351,
             }).addTo(map);
+            rOverlay.on('load', () => {
+              if (isMounted) updateSwipeClips();
+            });
             rightOverlayRef.current = rOverlay;
           }
 
@@ -462,15 +479,15 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
           {/* Vertical Divider Glowing Line */}
           <div
-            className="absolute top-0 bottom-0 pointer-events-auto cursor-ew-resize z-40 transition-none"
+            className="absolute top-0 bottom-0 pointer-events-auto cursor-ew-resize z-40 transition-none w-12 -ml-6 flex items-center justify-center group"
             style={{ left: `${swipePosition}%` }}
             onMouseDown={handleDividerMouseDown}
             onTouchStart={handleDividerTouchStart}
           >
             {/* The Line */}
             <div
-              className={`absolute top-0 bottom-0 -left-0.5 w-1 bg-gradient-to-b from-[#7f9870] via-[#5c744f] to-[#3A4831] shadow-lg ${
-                isDragging ? 'w-1.5 shadow-[#7f9870]/50' : ''
+              className={`absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-[#7f9870] via-[#5c744f] to-[#3A4831] shadow-lg transition-all ${
+                isDragging ? 'w-1.5 shadow-[#7f9870]/50' : 'group-hover:w-1.5'
               }`}
               style={{
                 boxShadow: '0 0 10px rgba(127, 152, 112, 0.6), 0 0 20px rgba(58, 72, 49, 0.4)',
@@ -479,7 +496,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({
 
             {/* Center Draggable Knob */}
             <div
-              className={`absolute top-1/2 -translate-y-1/2 -left-5 w-10 h-10 rounded-full liquid-glass flex items-center justify-center text-zinc-100 shadow-2xl transition-transform hover:scale-110 active:scale-95 ${
+              className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-11 h-11 rounded-full liquid-glass flex items-center justify-center text-zinc-100 shadow-2xl transition-transform hover:scale-110 active:scale-95 ${
                 isDragging ? 'scale-115 text-white' : ''
               }`}
               style={{

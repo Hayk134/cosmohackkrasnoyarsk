@@ -445,6 +445,8 @@ def _build_image_response(png_bytes: bytes, bounds: tuple) -> Response:
         "X-Bbox-North": str(top),
         "X-Bounding-Box": json.dumps([left, bottom, right, top]),
         "Access-Control-Expose-Headers": "X-Bbox-West, X-Bbox-South, X-Bbox-East, X-Bbox-North, X-Bounding-Box",
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
     }
     return Response(content=png_bytes, media_type="image/png", headers=headers)
